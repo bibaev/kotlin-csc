@@ -1,4 +1,4 @@
-package _2Board
+package com.compsciencecenter.bibaev.kotlin.homework.third._2Board
 
 interface Cell {
     val i: Int
@@ -37,3 +37,4 @@ interface GameBoard<T> : SquareBoard {
     fun any(predicate: (T?) -> Boolean): Boolean
     fun all(predicate: (T?) -> Boolean): Boolean
 }
+

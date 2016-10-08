@@ -1,4 +1,4 @@
-package _2Board
+package com.compsciencecenter.bibaev.kotlin.homework.third._2Board
 
 import org.junit.Assert
 import org.junit.Test

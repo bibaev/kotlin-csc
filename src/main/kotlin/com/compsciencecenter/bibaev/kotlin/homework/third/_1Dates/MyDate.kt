@@ -1,7 +1,7 @@
 package com.compsciencecenter.bibaev.kotlin.homework.third._1Dates
 
-import _1Dates.addTimeIntervals
-import _1Dates.nextDay
+import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.addTimeIntervals
+import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.nextDay
 
 data class MyDate(val year: Int, val month: Int, val dayOfMonth: Int) : Comparable<MyDate> {
     override fun compareTo(other: MyDate): Int {

@@ -1,6 +1,5 @@
-package _1Dates
+package com.compsciencecenter.bibaev.kotlin.homework.third._1Dates
 
-import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.MyDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
