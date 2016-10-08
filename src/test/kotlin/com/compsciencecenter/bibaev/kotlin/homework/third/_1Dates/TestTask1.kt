@@ -1,5 +1,6 @@
 package _1Dates
 
+import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.MyDate
 import org.junit.Assert
 import org.junit.Test
 

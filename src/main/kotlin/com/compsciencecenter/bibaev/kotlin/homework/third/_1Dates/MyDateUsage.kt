@@ -1,6 +1,7 @@
 package _1Dates
 
-import _1Dates.TimeInterval.*
+import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.*
+import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.TimeInterval.*
 
 fun task1(date1: MyDate, date2: MyDate): Boolean {
     return date1 < date2
@@ -21,11 +22,9 @@ fun task4(firstDate: MyDate, secondDate: MyDate, handler: (MyDate) -> Unit) {
 }
 
 fun task5(today: MyDate): MyDate {
-    TODO()
-//    return today + YEAR + WEEK
+    return today + YEAR + WEEK
 }
 
 fun task6(today: MyDate): MyDate {
-    TODO()
-//    return today + YEAR * 2 + WEEK * 3 + DAY * 5
+    return today + YEAR * 2 + WEEK * 3 + 5 * DAY
 }

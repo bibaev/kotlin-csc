@@ -1,6 +1,8 @@
 package _1Dates
 
-import _1Dates.TimeInterval.*
+import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.MyDate
+import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.TimeInterval
+import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.TimeInterval.*
 import java.time.LocalDate
 
 fun MyDate.nextDay() = addTimeIntervals(DAY, 1)

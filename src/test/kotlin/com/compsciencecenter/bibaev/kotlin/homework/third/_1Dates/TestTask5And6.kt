@@ -1,6 +1,7 @@
 package _1Dates
 
-import _1Dates.TimeInterval.*
+import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.MyDate
+import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.TimeInterval.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

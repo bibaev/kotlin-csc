@@ -1,4 +1,7 @@
-package _1Dates
+package com.compsciencecenter.bibaev.kotlin.homework.third._1Dates
+
+import _1Dates.addTimeIntervals
+import _1Dates.nextDay
 
 data class MyDate(val year: Int, val month: Int, val dayOfMonth: Int) : Comparable<MyDate> {
     override fun compareTo(other: MyDate): Int {
@@ -33,8 +36,20 @@ operator fun DateRange.iterator(): Iterator<MyDate> = object : Iterator<MyDate> 
     }
 }
 
+class ComplexInterval(val interval: TimeInterval, val count:Int)
+
+operator fun MyDate.plus(interval: TimeInterval): MyDate = this + ComplexInterval(interval, 1)
+
+operator fun MyDate.plus(complexInterval: ComplexInterval): MyDate =
+        addTimeIntervals(complexInterval.interval, complexInterval.count)
+
 enum class TimeInterval {
     DAY,
     WEEK,
     YEAR
 }
+
+operator fun TimeInterval.times(count: Int): ComplexInterval = ComplexInterval(this, count)
+
+// 2 * WEEK looks semantically correct too
+operator fun Int.times(interval: TimeInterval): ComplexInterval = ComplexInterval(interval, this)
