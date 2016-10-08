@@ -1,6 +1,5 @@
 package com.compsciencecenter.bibaev.kotlin.homework.third._1Dates
 
-import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.*
 import com.compsciencecenter.bibaev.kotlin.homework.third._1Dates.TimeInterval.*
 
 fun task1(date1: MyDate, date2: MyDate): Boolean {
