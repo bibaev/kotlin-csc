@@ -66,7 +66,7 @@ Examples and tests in TestMoveValuesInRowOrColumn.
  */
 fun GameBoard<Int?>.moveValuesInRowOrColumn(rowOrColumn: List<Cell>): Boolean {
     val before = rowOrColumn.map { get(it) }
-    val res = before.moveAndMergeEqual { value -> value * value }
+    val res = before.moveAndMergeEqual { value -> 2 * value }
     res.zip(rowOrColumn).forEach { pair -> set(pair.second, pair.first) }
     rowOrColumn.subList(res.size, rowOrColumn.size).forEach { set(it, null) }
 
