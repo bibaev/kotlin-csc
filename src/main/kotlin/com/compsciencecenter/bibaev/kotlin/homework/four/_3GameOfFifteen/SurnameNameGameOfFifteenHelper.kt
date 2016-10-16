@@ -11,5 +11,7 @@ If the game of fifteen is started with the wrong parity, you can't get the corre
 Thus the initial permutation should be correct.
  */
 fun countParity(permutation: List<Int>): Boolean {
-    TODO()
+    val inversions = permutation
+            .mapIndexed { ix, elem -> permutation.subList(ix + 1, permutation.size).count { it < elem } }.sum()
+    return inversions == 0 || inversions % 2 == 0
 }

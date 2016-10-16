@@ -49,7 +49,13 @@ Use the generateRandomStartValue function above.
 Examples and tests in TestAddRandomValue.
  */
 fun GameBoard<Int?>.addRandomValue() {
-    TODO()
+    val freeCells = indices.filter { ix -> get(ix.first, ix.second) == null }.toList()
+    if (freeCells.isEmpty()) {
+        throw IllegalStateException("The board already filled")
+    }
+
+    val randomIndices = freeCells[random.nextInt(freeCells.size)]
+    set(randomIndices.first, randomIndices.second, generateRandomStartValue())
 }
 
 /*
@@ -59,7 +65,13 @@ The values should be moved to the beginning of the row (or column), in the same 
 Examples and tests in TestMoveValuesInRowOrColumn.
  */
 fun GameBoard<Int?>.moveValuesInRowOrColumn(rowOrColumn: List<Cell>): Boolean {
-    TODO()
+    val before = rowOrColumn.map { get(it) }
+    val res = before.moveAndMergeEqual { value -> 2 * value }
+    res.zip(rowOrColumn).forEach { pair -> set(pair.second, pair.first) }
+    rowOrColumn.subList(res.size, rowOrColumn.size).forEach { set(it, null) }
+
+    val after = rowOrColumn.map { get(it) }
+    return before.zip(after).any { p -> p.first != p.second }
 }
 
 /*
@@ -68,5 +80,12 @@ Use the moveValuesInRowOrColumn function above.
 Examples and tests in TestMoveValues.
  */
 fun GameBoard<Int?>.moveValues(direction: Direction): Boolean {
-    TODO()
+    val r = when (direction) {
+        Direction.UP -> (1..width).map { x -> getColumn(1..width, x) }.toList()
+        Direction.DOWN -> (1..width).map { x -> getColumn(width downTo 1, x) }.toList()
+        Direction.LEFT -> (1..width).map { x -> getRow(x, 1..width) }.toList()
+        Direction.RIGHT -> (1..width).map { x -> getRow(x, width downTo 1) }.toList()
+    }
+
+    return r.map { moveValuesInRowOrColumn(it) }.any { x -> x }
 }
