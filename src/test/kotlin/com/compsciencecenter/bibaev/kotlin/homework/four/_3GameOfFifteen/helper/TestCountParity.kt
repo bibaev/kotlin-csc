@@ -1,49 +1,60 @@
 package com.compsciencecenter.bibaev.kotlin.homework.four._3GameOfFifteen.helper
 
+import com.compsciencecenter.bibaev.kotlin.homework.four._3GameOfFifteen.countParity
 import org.junit.Assert
 import org.junit.Test
-import com.compsciencecenter.bibaev.kotlin.homework.four._3GameOfFifteen.countParity
 
 class TestCountParity {
     fun testPermutation(permutation: List<Int>, parity: Boolean) {
-        Assert.assertEquals("This permutation is ${if (parity) "even" else "odd"}: $permutation", parity, countParity(permutation))
+        Assert.assertEquals("This permutation is ${if (parity) "even" else "odd"}: $permutation", parity,
+                countParity(permutation))
     }
 
-    fun testPermutation(shortPermutation: Int, parity: Boolean) {
-        val permutation = shortPermutation.toString().map { "$it".toInt() }
-        testPermutation(permutation, parity)
+    fun testPermutation(permutation: String, parity: Boolean) {
+        testPermutation(permutation.map { "$it".toInt() }, parity)
     }
 
-    fun testEven(shortPermutation: Int) = testPermutation(shortPermutation, true)
-    fun testOdd(shortPermutation: Int) = testPermutation(shortPermutation, false)
+    fun testEven(shortPermutation: String) = testPermutation(shortPermutation, true)
+    fun testOdd(shortPermutation: String) = testPermutation(shortPermutation, false)
+
+    fun testEven(shortPermutation: Int) = testEven(shortPermutation.toString())
+    fun testOdd(shortPermutation: Int) = testOdd(shortPermutation.toString())
 
     @Test fun testEven0() = testEven(123)
-    @Test fun testEven1() = testEven(2134)
-    @Test fun testEven2() = testEven(1324)
-    @Test fun testEven3() = testEven(3214)
-    @Test fun testEven4() = testEven(1243)
-    @Test fun testEven5() = testEven(4123)
-    @Test fun testEven6() = testEven(2413)
-    @Test fun testEven7() = testEven(3142)
-    @Test fun testEven8() = testEven(1432)
-    @Test fun testEven9() = testEven(4312)
-    @Test fun testEven10() = testEven(2341)
-    @Test fun testEven11() = testEven(4231)
-    @Test fun testEven12() = testEven(3421)
+    @Test fun testEven1() = testEven(1234)
+    @Test fun testEven2() = testEven(3124)
+    @Test fun testEven3() = testEven(2314)
+    @Test fun testEven4() = testEven(2143)
+    @Test fun testEven5() = testEven(1423)
+    @Test fun testEven6() = testEven(4213)
+    @Test fun testEven7() = testEven(1342)
+    @Test fun testEven8() = testEven(4132)
+    @Test fun testEven9() = testEven(3412)
+    @Test fun testEven10() = testEven(3241)
+    @Test fun testEven11() = testEven(2431)
+    @Test fun testEven12() = testEven(4321)
+    @Test fun testEven13() = testEven("0123456789")
+    @Test fun testEven14() = testEven("4301865279")
+    @Test fun testEven15() = testEven("9604572831")
+    @Test fun testEven16() = testEven("1320485769")
 
     @Test fun testOdd0() = testOdd(132)
-    @Test fun testOdd1() = testOdd(1234)
-    @Test fun testOdd2() = testOdd(3124)
-    @Test fun testOdd3() = testOdd(2314)
-    @Test fun testOdd4() = testOdd(2143)
-    @Test fun testOdd5() = testOdd(1423)
-    @Test fun testOdd6() = testOdd(4213)
-    @Test fun testOdd7() = testOdd(1342)
-    @Test fun testOdd8() = testOdd(4132)
-    @Test fun testOdd9() = testOdd(3412)
-    @Test fun testOdd10() = testOdd(3241)
-    @Test fun testOdd11() = testOdd(2431)
-    @Test fun testOdd12() = testOdd(4321)
+    @Test fun testOdd1() = testOdd(2134)
+    @Test fun testOdd2() = testOdd(1324)
+    @Test fun testOdd3() = testOdd(3214)
+    @Test fun testOdd4() = testOdd(1243)
+    @Test fun testOdd5() = testOdd(4123)
+    @Test fun testOdd6() = testOdd(2413)
+    @Test fun testOdd7() = testOdd(3142)
+    @Test fun testOdd8() = testOdd(1432)
+    @Test fun testOdd9() = testOdd(4312)
+    @Test fun testOdd10() = testOdd(2341)
+    @Test fun testOdd11() = testOdd(4231)
+    @Test fun testOdd12() = testOdd(3421)
+    @Test fun testOdd13() = testOdd("1234567890")
+    @Test fun testOdd14() = testOdd("5782401963")
+    @Test fun testOdd15() = testOdd("3592871064")
+    @Test fun testOdd16() = testOdd("2045831967")
 
     @Test fun testStart() = testPermutation((1..15).toList(), true)
 }
