@@ -50,7 +50,7 @@ Examples and tests in TestAddRandomValue.
  */
 fun GameBoard<Int?>.addRandomValue() {
     val freeCells = indices.filter { ix -> get(ix.first, ix.second) == null }.toList()
-    if (freeCells.isEmpty()){
+    if (freeCells.isEmpty()) {
         throw IllegalStateException("The board already filled")
     }
 
@@ -65,7 +65,13 @@ The values should be moved to the beginning of the row (or column), in the same 
 Examples and tests in TestMoveValuesInRowOrColumn.
  */
 fun GameBoard<Int?>.moveValuesInRowOrColumn(rowOrColumn: List<Cell>): Boolean {
-    TODO()
+    val before = rowOrColumn.map { get(it) }
+    val res = before.moveAndMergeEqual { value -> value * value }
+    res.zip(rowOrColumn).forEach { pair -> set(pair.second, pair.first) }
+    rowOrColumn.subList(res.size, rowOrColumn.size).forEach { set(it, null) }
+
+    val after = rowOrColumn.map { get(it) }
+    return before != after
 }
 
 /*

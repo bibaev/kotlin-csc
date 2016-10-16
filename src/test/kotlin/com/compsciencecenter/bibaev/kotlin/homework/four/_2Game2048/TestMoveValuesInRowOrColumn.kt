@@ -44,6 +44,13 @@ class TestMoveValuesInRowOrColumn : TestGameWithSmallNumbers() {
 4000""")
 
     @Test
+    fun testLastValueZero() = testMoveInRowOrColumn({ it.getRow(2, 1 downTo 4) }, """
+0204
+2000
+0000
+4000""", expectedMove = false)
+
+    @Test
     fun testNoMove() = testMoveInRowOrColumn({ it.getRow(1, 1..4) },
             "2424 0000 0000 0000", "2424 0000 0000 0000", expectedMove = false)
 
