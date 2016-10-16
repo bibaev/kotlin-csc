@@ -71,7 +71,7 @@ fun GameBoard<Int?>.moveValuesInRowOrColumn(rowOrColumn: List<Cell>): Boolean {
     rowOrColumn.subList(res.size, rowOrColumn.size).forEach { set(it, null) }
 
     val after = rowOrColumn.map { get(it) }
-    return before != after
+    return before.zip(after).any { p -> p.first != p.second }
 }
 
 /*
@@ -80,5 +80,12 @@ Use the moveValuesInRowOrColumn function above.
 Examples and tests in TestMoveValues.
  */
 fun GameBoard<Int?>.moveValues(direction: Direction): Boolean {
-    TODO()
+    val r = when (direction) {
+        Direction.UP -> (1..width).map { x -> getColumn(1..width, x) }.toList()
+        Direction.DOWN -> (1..width).map { x -> getColumn(width downTo 1, x) }.toList()
+        Direction.LEFT -> (1..width).map { x -> getRow(x, 1..width) }.toList()
+        Direction.RIGHT -> (1..width).map { x -> getRow(x, width downTo 1) }.toList()
+    }
+
+    return r.map { moveValuesInRowOrColumn(it) }.any { x -> x }
 }
