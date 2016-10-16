@@ -49,7 +49,13 @@ Use the generateRandomStartValue function above.
 Examples and tests in TestAddRandomValue.
  */
 fun GameBoard<Int?>.addRandomValue() {
-    TODO()
+    val freeCells = indices.filter { ix -> get(ix.first, ix.second) == null }.toList()
+    if (freeCells.isEmpty()){
+        throw IllegalStateException("The board already filled")
+    }
+
+    val randomIndices = freeCells[random.nextInt(freeCells.size)]
+    set(randomIndices.first, randomIndices.second, generateRandomStartValue())
 }
 
 /*
