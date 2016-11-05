@@ -26,8 +26,8 @@ fun renderProductTable(): String {
                     text("Popularity")
                 }
             }
-            val products = getProducts()
-            products.forEachIndexed { i, product ->
+
+            getProducts().forEachIndexed { i, product ->
                 tr {
                     td(color = getCellColor(i, 0)) {
                         text(product.description)

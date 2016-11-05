@@ -10,7 +10,7 @@ interface StateBuilder {
 interface StateMachineBuilder {
     fun event(code: String): Event
     fun command(code: String): Command
-    fun resetEvents(vararg codes: String): Unit
+    fun resetEvents(vararg codes: String)
 
     fun state(code: String, builder: StateBuilder.() -> Unit): State
 }

@@ -42,10 +42,9 @@ fun setUpStateMachine(): StateMachine {
     }
     unlockedPanel.configure {
         commands(unlockPanel, lockDoor)
-        transition(panelClosed, idle)
 
         // Bonus. Make the following way a legal way to define a transition as well.
-        // panelClosed leadsTo idle
+        panelClosed leadsTo idle
     }
 
 
