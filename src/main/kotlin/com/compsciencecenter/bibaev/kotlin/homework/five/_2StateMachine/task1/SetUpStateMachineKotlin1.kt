@@ -22,7 +22,7 @@ fun setUpStateMachine(): StateMachine {
 
     val machine = StateMachine(idle)
 
-    /*
+
     // Support the following way to configure state machine.
     // Use (and implement) the interface StateBuilder defined in the file SurnameNameTask1.kt
 
@@ -47,7 +47,7 @@ fun setUpStateMachine(): StateMachine {
         // Bonus. Make the following way a legal way to define a transition as well.
         // panelClosed leadsTo idle
     }
-    */
+
 
     machine.addResetEvent(doorOpened)
     return machine
