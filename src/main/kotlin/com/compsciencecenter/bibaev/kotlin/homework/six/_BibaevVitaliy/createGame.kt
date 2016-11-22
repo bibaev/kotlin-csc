@@ -19,20 +19,23 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
     private val myHeight: Int
     private val myWidth: Int
 
-    private val myPositions: Map<Int, MutableMap<Int, Position>> // all available positions (bridges included)
+    private val myPositions: Map<Int, Map<Int, Position>> // all available positions (bridges included)
     private val myPosition2Char: Map<Position, Char>
+    private val myDefaultBridgeState: Map<Char, BridgeState>
 
-    private val myChar2BridgeState: MutableMap<Char, BridgeState> = mutableMapOf()
     private val myPosition2Switch: Map<Position, Switch>
-
     private val myTarget: Position
-    private val myStart: Position
-    private var myBlock: Block
 
+    private val myStart: Position
     override val height: Int
         get() = myHeight
+
     override val width: Int
         get() = myWidth
+
+    private data class GameState(val block: Block, val bridges: MutableMap<Char, BridgeState>)
+
+    private var myState: GameState
 
     init {
         val boardArrays = board.split('\n')
@@ -61,10 +64,11 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
         myPosition2Char = pos2Char
 
         val switches = mutableMapOf<Position, Switch>()
+        val bridge2State = mutableMapOf<Char, BridgeState>()
         if (bridgesInfo != null) {
             for ((name, bridge) in bridgesInfo.bridges) {
                 for (bridgePosition in findSymbol(name)) {
-                    myChar2BridgeState[name] = bridge.initialState
+                    bridge2State[name] = bridge.initialState
                 }
             }
 
@@ -75,6 +79,7 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
             }
         }
 
+        myDefaultBridgeState = bridge2State
         myPosition2Switch = switches
 
         myHeight = boardArrays.size
@@ -84,7 +89,8 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
         assert(start.size == 1, { "Error: start position must be exactly one" })
         myStart = start[0]
 
-        myBlock = StandingBlock(myStart)
+        myState = GameState(StandingBlock(myStart), bridge2State)
+
         val target = findSymbol('T')
         assert(target.size <= 1, { "Error: target position must be not greater then one" })
 
@@ -94,7 +100,7 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
     override fun getCellValue(i: Int, j: Int): Char? {
         val position = myPositions[i - 1]?.get(j - 1) ?: return null
 
-        if (myBlock.cover(position)) {
+        if (myState.block.cover(position)) {
             return 'x'
         }
 
@@ -104,7 +110,7 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
         }
 
         if (char.isLowerCase()) {
-            val state = myChar2BridgeState[char]!!
+            val state = myState.bridges[char]!!
             if (state == BridgeState.CLOSED) {
                 return null
             } else {
@@ -115,16 +121,21 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
         return char
     }
 
-    override fun processMove(direction: Direction) {
-        if (!myBlock.canMove(direction, myChar2BridgeState)) {
-            myBlock = StandingBlock(myStart)
-        } else {
-            myBlock = myBlock.move(direction)
-            myBlock.updateBridgesStates(myChar2BridgeState)
+    private fun GameState.processMove(direction: Direction): GameState {
+        if (!block.canMove(direction, bridges)) {
+            return GameState(StandingBlock(myStart), LinkedHashMap(myDefaultBridgeState))
         }
+
+        val newBlock = block.move(direction)
+        newBlock.updateBridgesStates(bridges)
+        return GameState(newBlock, bridges)
     }
 
-    override fun hasWon(): Boolean = myBlock.isStand && myBlock.cover(myTarget)
+    override fun processMove(direction: Direction) {
+        myState = myState.processMove(direction)
+    }
+
+    override fun hasWon(): Boolean = myState.block.isStand && myState.block.cover(myTarget)
 
     override fun toString(): String =
             (0 until myHeight).map { i ->
@@ -135,11 +146,10 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
 
 
     override fun suggestMoves(): List<Direction>? {
-        data class BfsNode(val block: Block, val state: Map<Char, BridgeState>)
 
-        val previous = mutableMapOf<BfsNode, Pair<Direction, BfsNode>>()
-        val queue: Queue<BfsNode> = LinkedList<BfsNode>()
-        val current = BfsNode(myBlock, myChar2BridgeState)
+        val previous = mutableMapOf<GameState, Pair<Direction, GameState>>()
+        val queue: Queue<GameState> = LinkedList<GameState>()
+        val current = myState
         queue.add(current)
         while (!queue.isEmpty()) {
             val prev = queue.poll()
@@ -152,7 +162,7 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
                 val nextBlock = block.move(direction)
                 val newBridgesState = HashMap<Char, BridgeState>(state)
                 nextBlock.updateBridgesStates(newBridgesState)
-                val next = BfsNode(nextBlock, newBridgesState)
+                val next = GameState(nextBlock, newBridgesState)
                 if (!previous.containsKey(next)) {
                     previous[next] = direction to prev
                     queue.add(next)
