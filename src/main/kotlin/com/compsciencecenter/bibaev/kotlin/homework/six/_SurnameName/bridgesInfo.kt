@@ -20,7 +20,6 @@ fun bridgesInfo(init: BridgesBuilder.() -> Unit): BridgesInfo {
                 override fun switch(name: Char, action: SwitchAction, type: SwitchType) {
                     switches[name] = Switch(name, bridge, action, type)
                 }
-
             }.init()
             bridges[name] = bridge
         }
