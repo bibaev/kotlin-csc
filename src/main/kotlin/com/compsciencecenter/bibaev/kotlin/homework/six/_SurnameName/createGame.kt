@@ -1,4 +1,4 @@
-package _SurnameName
+package _BibaevVitaliy
 
 import bloxorz.Direction
 import bloxorz.Game
@@ -56,6 +56,7 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
                 positionsMap[i] = nestedMap
             }
         }
+
         myPositions = positionsMap
         myPosition2Char = pos2Char
 
@@ -73,20 +74,21 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
                 }
             }
         }
+
         myPosition2Switch = switches
+
         myHeight = boardArrays.size
         myWidth = boardArrays.map { x -> x.size }.max()!!
+
         val start = findSymbol('S')
         assert(start.size == 1, { "Error: start position must be exactly one" })
         myStart = start[0]
+
         myBlock = StandingBlock(myStart)
         val target = findSymbol('T')
         assert(target.size <= 1, { "Error: target position must be not greater then one" })
-        if (target.isEmpty()) {
-            myTarget = Position(-1, -1)
-        } else {
-            myTarget = target[0]
-        }
+
+        myTarget = target.getOrElse(0, { Position(-1, -1) })
     }
 
     override fun getCellValue(i: Int, j: Int): Char? {
@@ -133,11 +135,11 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
 
 
     override fun suggestMoves(): List<Direction>? {
-        data class Node(val block: Block, val state: Map<Char, BridgeState>)
+        data class BfsNode(val block: Block, val state: Map<Char, BridgeState>)
 
-        val previous = mutableMapOf<Node, Pair<Direction, Node>>()
-        val queue: Queue<Node> = LinkedList<Node>()
-        val current = Node(myBlock, myChar2BridgeState)
+        val previous = mutableMapOf<BfsNode, Pair<Direction, BfsNode>>()
+        val queue: Queue<BfsNode> = LinkedList<BfsNode>()
+        val current = BfsNode(myBlock, myChar2BridgeState)
         queue.add(current)
         while (!queue.isEmpty()) {
             val prev = queue.poll()
@@ -150,7 +152,7 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
                 val nextBlock = block.move(direction)
                 val newBridgesState = HashMap<Char, BridgeState>(state)
                 nextBlock.updateBridgesStates(newBridgesState)
-                val next = Node(nextBlock, newBridgesState)
+                val next = BfsNode(nextBlock, newBridgesState)
                 if (!previous.containsKey(next)) {
                     previous[next] = direction to prev
                     queue.add(next)
@@ -206,7 +208,7 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
             val move = toMove(direction)
             val moved = move(pos) ?: return false
             val movedMoved = move(moved)
-            return movedMoved != null && !checkClosedBridges(moved, state) && !checkClosedBridges(movedMoved, state)
+            return movedMoved != null && !isOnClosedBridge(moved, state) && !isOnClosedBridge(movedMoved, state)
         }
 
         override fun move(direction: Direction): Block {
@@ -234,16 +236,15 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
 
         override fun canMove(direction: Direction, state: Map<Char, BridgeState>): Boolean {
             val newPos = getNewPositions(direction) ?: return false
-            // No closed bridges
             if (newPos.first == newPos.second) {
                 val pos = newPos.first
                 if (myPosition2Char[pos] == '.') {
                     return false
                 }
 
-                return !checkClosedBridges(pos, state)
+                return !isOnClosedBridge(pos, state)
             } else {
-                return !checkClosedBridges(newPos.first, state) && !checkClosedBridges(newPos.second, state)
+                return !isOnClosedBridge(newPos.first, state) && !isOnClosedBridge(newPos.second, state)
             }
         }
 
@@ -288,11 +289,12 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
                     return fstPos to sndPos
                 }
             }
+
             return null
         }
     }
 
-    private fun checkClosedBridges(pos: Position, state: Map<Char, BridgeState>): Boolean {
+    private fun isOnClosedBridge(pos: Position, state: Map<Char, BridgeState>): Boolean {
         val char = myPosition2Char[pos] ?: return false
         return state[char] == BridgeState.CLOSED
     }

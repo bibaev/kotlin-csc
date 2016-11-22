@@ -1,4 +1,4 @@
-package _SurnameName
+package _BibaevVitaliy
 
 import bridges.*
 import bridges.BridgeState.CLOSED

@@ -1,6 +1,6 @@
 package ui
 
-import _SurnameName.createGame
+import _BibaevVitaliy.createGame
 import bridges.BridgesInfo
 import bridges.bridgeInfoForLevels
 import java.io.File

@@ -1,6 +1,6 @@
 package ui
 
-import _SurnameName.createGame
+import _BibaevVitaliy.createGame
 
 
 fun main(args: Array<String>) {
