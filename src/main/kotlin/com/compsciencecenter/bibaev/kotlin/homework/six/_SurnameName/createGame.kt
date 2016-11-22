@@ -3,6 +3,7 @@ package _SurnameName
 import bloxorz.Direction
 import bridges.BridgesInfo
 import bloxorz.Game
+import java.util.*
 
 // Your solution should live in this folder/package only (rename _SurnameName accordingly.)
 // You may add as many subpackages as you need, but the function 'createGame' below should live in the root _SurnameName package.
@@ -10,6 +11,10 @@ import bloxorz.Game
 
 class GameImpl : Game {
     private data class Position(val i: Int, val j: Int)
+
+    companion object {
+        val DIRECTIONS: List<Direction> = listOf(Direction.UP, Direction.LEFT, Direction.DOWN, Direction.RIGHT)
+    }
 
     private val myHeight: Int
     private val myWidth: Int
@@ -41,7 +46,6 @@ class GameImpl : Game {
                             pos2Char[pos] = boardArrays[i][j]
                             nestedMap[j] = pos
                         }
-
                     }
                 }
                 positionsMap[i] = nestedMap
@@ -89,18 +93,13 @@ class GameImpl : Game {
     }
 
     override fun processMove(direction: Direction) {
-        if (!suggestMoves().orEmpty().contains(direction)) {
+        if (!isMovePossible(toMove(direction))) {
             myFirstBlockPosition = myStart
             mySecondBlockPosition = myStart
             return
         }
 
-        when (direction) {
-            Direction.UP -> processMove { up(it)!! }
-            Direction.DOWN -> processMove { down(it)!! }
-            Direction.RIGHT -> processMove { right(it)!! }
-            Direction.LEFT -> processMove { left(it)!! }
-        }
+        processMove({ x -> toMove(direction).invoke(x)!! })
     }
 
     override fun hasWon(): Boolean = myFirstBlockPosition == myTarget && mySecondBlockPosition == myTarget
@@ -114,44 +113,83 @@ class GameImpl : Game {
 
 
     override fun suggestMoves(): List<Direction>? {
-        val result = mutableListOf<Direction>()
+        val previous = mutableMapOf<Pair<Position, Position>, Pair<Direction, Pair<Position, Position>>>()
+        val queue: Queue<Pair<Position, Position>> = LinkedList<Pair<Position, Position>>()
+        queue.add(myStart to myStart)
+        while (!queue.isEmpty()) {
+            val prev = queue.poll()
+            val (firstPos, secondPos) = prev
+            if (firstPos == secondPos && firstPos == myTarget) {
+                break
+            }
 
-        fun check(dir: Direction, move: (Position) -> Position?): Unit {
-            if (isMovePossible(move)) {
-                result += dir
+            for (direction in DIRECTIONS.filter { isMovePossible(toMove(it), firstPos, secondPos) }) {
+                val next = getNextPositions({ x -> toMove(direction).invoke(x)!! }, firstPos, secondPos)
+                if (!previous.contains(next)) {
+                    previous[next] = direction to prev
+                    queue.add(next)
+                }
             }
         }
 
-        check(Direction.UP, { up(it) })
-        check(Direction.DOWN, { down(it) })
-        check(Direction.LEFT, { left(it) })
-        check(Direction.RIGHT, { right(it) })
-
-        if (result.isEmpty()) {
+        val target = myTarget to myTarget
+        if (!previous.contains(myTarget to myTarget)) {
             return null
         }
 
-        return result
+        var prev: Pair<Position, Position>? = target
+        val start = myStart to myStart
+        val result = mutableListOf<Direction>()
+        while (prev != start) {
+            val dir2prev = previous[prev]
+            if (dir2prev != null) {
+                result += dir2prev.first
+            }
+
+            prev = dir2prev?.second
+        }
+
+        return result.asReversed()
     }
 
     private fun findSymbol(sym: Char): List<Position> = myPosition2Char.filterValues { x -> x == sym }.keys.toList()
 
-    private fun isMovePossible(move: (Position) -> Position?): Boolean =
-            move(myFirstBlockPosition) != null && move(mySecondBlockPosition) != null &&
-                    (myFirstBlockPosition != mySecondBlockPosition || move(move(mySecondBlockPosition)!!) != null);
+    private fun isMovePossible(move: (Position) -> Position?,
+                               fst: Position = myFirstBlockPosition,
+                               snd: Position = mySecondBlockPosition): Boolean =
+            move(fst) != null && move(snd) != null && (fst != snd || move(move(snd)!!) != null)
 
 
-    private fun processMove(move: (Position) -> Position) {
-        if (myFirstBlockPosition == mySecondBlockPosition) {
-            mySecondBlockPosition = move(mySecondBlockPosition)
-        } else if (mySecondBlockPosition == move(myFirstBlockPosition)) {
-            myFirstBlockPosition = mySecondBlockPosition
-        } else if (myFirstBlockPosition == move(mySecondBlockPosition)) {
-            mySecondBlockPosition = myFirstBlockPosition
+    private fun getNextPositions(move: (Position) -> Position,
+                                 firstPosition: Position = myFirstBlockPosition,
+                                 secondPosition: Position = mySecondBlockPosition)
+            : Pair<Position, Position> {
+        var first = firstPosition
+        var second = secondPosition
+        if (first == second) {
+            second = move(second)
+        } else if (second == move(first)) {
+            first = second
+        } else if (first == move(second)) {
+            second = first
         }
 
-        myFirstBlockPosition = move(myFirstBlockPosition)
-        mySecondBlockPosition = move(mySecondBlockPosition)
+        return move(first) to move(second)
+    }
+
+    private fun processMove(move: (Position) -> Position) {
+        val newPosition = getNextPositions(move)
+        myFirstBlockPosition = newPosition.first
+        mySecondBlockPosition = newPosition.second
+    }
+
+    private fun toMove(direction: Direction): (Position) -> Position? {
+        when (direction) {
+            Direction.UP -> return { up(it) }
+            Direction.DOWN -> return { down(it) }
+            Direction.RIGHT -> return { right(it) }
+            Direction.LEFT -> return { left(it) }
+        }
     }
 
     private fun up(pos: Position): Position? = myPositions[pos.i - 1]?.get(pos.j)
