@@ -16,6 +16,14 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
         val DIRECTIONS: List<Direction> = listOf(Direction.UP, Direction.LEFT, Direction.DOWN, Direction.RIGHT)
     }
 
+    private interface Block {
+        val isStand: Boolean
+        val positions: List<Position>
+        fun canMove(direction: Direction, state: Map<Char, BridgeState>): Boolean
+        fun move(direction: Direction, state: Map<Char, BridgeState>): Block
+        fun cover(position: Position): Boolean
+    }
+
     private val myHeight: Int
     private val myWidth: Int
 
@@ -33,14 +41,16 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
     override val width: Int
         get() = myWidth
 
-    private data class GameState(val block: Block, val bridges: MutableMap<Char, BridgeState>)
-
-    private var myState: GameState
+    /**
+     * the only mutable field - block, bridges state
+     */
+    private val myMutableState: GameState
 
     init {
         val boardArrays = board.split('\n')
                 .map { x -> x.trimEnd().toCharArray().filterIndexed { i, x -> i % 2 == 0 } }
         assert(boardArrays.isNotEmpty(), { "Board cannot be empty" })
+
         val positionsMap = mutableMapOf<Int, MutableMap<Int, Position>>()
         val pos2Char = mutableMapOf<Position, Char>()
         boardArrays.indices.forEach { i ->
@@ -89,7 +99,7 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
         assert(start.size == 1, { "Error: start position must be exactly one" })
         myStart = start[0]
 
-        myState = GameState(StandingBlock(myStart), bridge2State)
+        myMutableState = GameState(StandingBlock(myStart), bridge2State)
 
         val target = findSymbol('T')
         assert(target.size <= 1, { "Error: target position must be not greater then one" })
@@ -100,42 +110,26 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
     override fun getCellValue(i: Int, j: Int): Char? {
         val position = myPositions[i - 1]?.get(j - 1) ?: return null
 
-        if (myState.block.cover(position)) {
+        if (myMutableState.block.cover(position)) {
             return 'x'
         }
 
         val char = myPosition2Char[position]!!
-        if (!char.isLetter() || char == 'S' || char == 'T') {
+        if (!char.isLetter() || char.isUpperCase()) {
             return char
         }
 
-        if (char.isLowerCase()) {
-            val state = myState.bridges[char]!!
-            if (state == BridgeState.CLOSED) {
-                return null
-            } else {
-                return char
-            }
+        val bridgeState = myMutableState.bridgeState(char)
+        if (bridgeState == null || bridgeState == BridgeState.CLOSED) {
+            return null
         }
 
         return char
     }
 
-    private fun GameState.processMove(direction: Direction): GameState {
-        if (!block.canMove(direction, bridges)) {
-            return GameState(StandingBlock(myStart), LinkedHashMap(myDefaultBridgeState))
-        }
+    override fun processMove(direction: Direction) = myMutableState.move(direction)
 
-        val newBlock = block.move(direction)
-        newBlock.updateBridgesStates(bridges)
-        return GameState(newBlock, bridges)
-    }
-
-    override fun processMove(direction: Direction) {
-        myState = myState.processMove(direction)
-    }
-
-    override fun hasWon(): Boolean = myState.block.isStand && myState.block.cover(myTarget)
+    override fun hasWon(): Boolean = myMutableState.block.isStand && myMutableState.block.cover(myTarget)
 
     override fun toString(): String =
             (0 until myHeight).map { i ->
@@ -146,23 +140,22 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
 
 
     override fun suggestMoves(): List<Direction>? {
-
         val previous = mutableMapOf<GameState, Pair<Direction, GameState>>()
         val queue: Queue<GameState> = LinkedList<GameState>()
-        val current = myState
+        val current = myMutableState
         queue.add(current)
+        var last: GameState? = null
         while (!queue.isEmpty()) {
             val prev = queue.poll()
-            val (block, state) = prev
+            val block = prev.block
             if (block.isStand && block.cover(myTarget)) {
+                last = prev
                 break
             }
 
-            for (direction in DIRECTIONS.filter { block.canMove(it, state) }) {
-                val nextBlock = block.move(direction)
-                val newBridgesState = HashMap<Char, BridgeState>(state)
-                nextBlock.updateBridgesStates(newBridgesState)
-                val next = GameState(nextBlock, newBridgesState)
+            for (direction in DIRECTIONS.filter { prev.canMove(it) }) {
+                val next = prev.copy()
+                next.move(direction)
                 if (!previous.containsKey(next)) {
                     previous[next] = direction to prev
                     queue.add(next)
@@ -170,15 +163,16 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
             }
         }
 
-        var prev = (previous.filterKeys { it.block == StandingBlock(myTarget) }.toList().getOrNull(0)
-                ?: return null).first
+        if (last == null) {
+            return null
+        }
 
         val result = mutableListOf<Direction>()
-        while (prev != current) {
-            val dir2prev = previous[prev] ?: return null
+        while (last != current) {
+            val dir2prev = previous[last] ?: return null
 
             result += dir2prev.first
-            prev = dir2prev.second
+            last = dir2prev.second
         }
 
         return result.asReversed()
@@ -200,17 +194,10 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
     private fun right(pos: Position): Position? = myPositions[pos.i]?.get(pos.j + 1)
     private fun down(pos: Position): Position? = myPositions[pos.i + 1]?.get(pos.j)
 
-    private interface Block {
-        val isStand: Boolean
-        fun canMove(direction: Direction, state: Map<Char, BridgeState>): Boolean
-        fun move(direction: Direction): Block
-        fun cover(position: Position): Boolean
-
-        fun updateBridgesStates(state: MutableMap<Char, BridgeState>)
-    }
-
     private inner class StandingBlock(val pos: Position) : Block {
         override val isStand: Boolean = true
+
+        override val positions: List<Position> by lazy { listOf(pos) }
 
         override fun cover(position: Position): Boolean = pos == position
 
@@ -221,15 +208,12 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
             return movedMoved != null && !isOnClosedBridge(moved, state) && !isOnClosedBridge(movedMoved, state)
         }
 
-        override fun move(direction: Direction): Block {
+        override fun move(direction: Direction, state: Map<Char, BridgeState>): Block {
+            assert(canMove(direction, state), { "cannot make a turn: $pos -> $direction" })
             val move = toMove(direction)
             val fst = move(pos)!!
             val snd = move(fst)!!
             return LyingBlock(fst, snd)
-        }
-
-        override fun updateBridgesStates(state: MutableMap<Char, BridgeState>) {
-            handleSwitch(pos, true, state)
         }
 
         override fun equals(other: Any?): Boolean = other is StandingBlock && other.pos == pos
@@ -241,6 +225,8 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
 
     private inner class LyingBlock(val firstPosition: Position, val secondPosition: Position) : Block {
         override val isStand: Boolean = false
+
+        override val positions: List<Position> by lazy { listOf(firstPosition, secondPosition) }
 
         override fun cover(position: Position): Boolean = firstPosition == position || secondPosition == position
 
@@ -258,18 +244,14 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
             }
         }
 
-        override fun move(direction: Direction): Block {
+        override fun move(direction: Direction, state: Map<Char, BridgeState>): Block {
+            assert(canMove(direction, state), { "cannot make a turn: $this -> $direction" })
             val newPos = getNewPositions(direction)!!
             if (newPos.first == newPos.second) {
                 return StandingBlock(newPos.first)
             } else {
                 return LyingBlock(newPos.first, newPos.second)
             }
-        }
-
-        override fun updateBridgesStates(state: MutableMap<Char, BridgeState>) {
-            handleSwitch(firstPosition, false, state)
-            handleSwitch(secondPosition, false, state)
         }
 
         override fun equals(other: Any?): Boolean = other is LyingBlock
@@ -309,19 +291,53 @@ class GameImpl(board: String, bridgesInfo: BridgesInfo?) : Game {
         return state[char] == BridgeState.CLOSED
     }
 
-    private fun handleSwitch(pos: Position, isStand: Boolean, bridgesState: MutableMap<Char, BridgeState>) {
-        val switch = myPosition2Switch[pos] ?: return
-        if (switch.type == SwitchType.FULL_BLOCK && !isStand) {
-            return
+    private inner class GameState(private var myBlock: Block = StandingBlock(myStart),
+                                  private var bridges: MutableMap<Char, BridgeState> = mutableMapOf()) {
+        val block: Block
+            get() = myBlock
+
+        fun canMove(direction: Direction): Boolean = myBlock.canMove(direction, bridges)
+
+        fun move(direction: Direction) {
+            if (!myBlock.canMove(direction, bridges)) {
+                myBlock = StandingBlock(myStart)
+                bridges = LinkedHashMap(myDefaultBridgeState)
+            } else {
+                myBlock = myBlock.move(direction, bridges)
+                myBlock.positions.forEach { handleSwitch(it) }
+            }
         }
 
-        val state = bridgesState[switch.bridge.name]!!
-        when (switch.action) {
-            SwitchAction.OPEN -> bridgesState[switch.bridge.name] = BridgeState.OPENED
-            SwitchAction.CLOSE -> bridgesState[switch.bridge.name] = BridgeState.CLOSED
-            SwitchAction.CHANGE -> when (state) {
-                BridgeState.OPENED -> bridgesState[switch.bridge.name] = BridgeState.CLOSED
-                BridgeState.CLOSED -> bridgesState[switch.bridge.name] = BridgeState.OPENED
+        fun bridgeState(char: Char): BridgeState? = bridges[char]
+
+        override fun equals(other: Any?): Boolean {
+            if (other is GameState) {
+                return myBlock == other.myBlock && bridges == other.bridges
+            }
+
+            return false
+        }
+
+        override fun hashCode(): Int {
+            return Objects.hash(myBlock, bridges)
+        }
+
+        fun copy(): GameState = GameState(myBlock, LinkedHashMap(bridges))
+
+        private fun handleSwitch(pos: Position) {
+            val switch = myPosition2Switch[pos] ?: return
+            if (switch.type == SwitchType.FULL_BLOCK && !myBlock.isStand) {
+                return
+            }
+
+            val state = bridges[switch.bridge.name]!!
+            when (switch.action) {
+                SwitchAction.OPEN -> bridges[switch.bridge.name] = BridgeState.OPENED
+                SwitchAction.CLOSE -> bridges[switch.bridge.name] = BridgeState.CLOSED
+                SwitchAction.CHANGE -> when (state) {
+                    BridgeState.OPENED -> bridges[switch.bridge.name] = BridgeState.CLOSED
+                    BridgeState.CLOSED -> bridges[switch.bridge.name] = BridgeState.OPENED
+                }
             }
         }
     }
