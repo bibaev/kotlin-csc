@@ -13,7 +13,7 @@ private val bloxorzLevelDir = "levels/bloxorz"
 
 abstract class TestGame {
     fun createGame(board: String, bridgesInfo: BridgesInfo? = null): Game =
-            _SurnameName.createGame(board, bridgesInfo)
+            _BibaevVitaliy.createGame(board, bridgesInfo)
 
     fun createGameForFile(filePath: String, bridgesInfo: BridgesInfo? = null): Game =
             createGame(File(filePath).readText(), bridgesInfo)
